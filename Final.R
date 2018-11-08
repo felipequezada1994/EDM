@@ -541,11 +541,6 @@ mean(Iter_RN$Recall)
 mean(Iter_RN$Specificidad)
 mean(Iter_RN$Score)
 
-library(png)
-png("red_0.jpg", width=1000)
-plotnet(Modelo, skip = F,x_names = c("Matemáticas","NEM","Cobertura salud","Pros. Estudios"))
-dev.off()
-
 #t=1
 datos_norm1$kfold   <- sample(1:Folds, nrow(datos_norm1), replace = T)
 Iter1_RN   <- data.frame(iteracion = NULL, Accurracy = NULL, Precision = NULL, 
@@ -577,171 +572,66 @@ mean(Iter1_RN$Recall)
 mean(Iter1_RN$Specificidad)
 mean(Iter1_RN$Score)
 
+#########################################
+###      GRÁFICOS DE RED NEURONAL     ###
+#########################################
+library(png)
+png("red_0.jpg", width=1000)
+plotnet(Modelo, skip = F,x_names = c("Matemáticas","NEM","Cobertura salud","Pros. Estudios"))
+dev.off()
 
 png("red_1.jpg", width=1000)
 plotnet(Modelo, skip = TRUE,x_names = c("Carrera", "Lenguaje","Matemáticas","Cobertura salud","Ramos Apro."))
 dev.off()
 
-
-
-
-
-
-#########################################################
-###                       GRÁFICO                     ###
-#########################################################
+#########################################
+###         GRÁFICOS DE LINEA         ###
+#########################################
 Iter_RL
 Iter1_RL
 Iter_SVM
 Iter1_SVM
 Iter_RN
 Iter1_RN
-write.csv(Iter_RL, file="Iter_RL.csv")
-write.csv(Iter1_RL, file="Iter1_RL.csv")
-write.csv(Iter_SVM, file="Iter_SVM.csv")
-write.csv(Iter1_SVM, file="Iter1_SVM.csv")
-write.csv(Iter_RN, file="Iter_RN.csv")
-write.csv(Iter1_RN, file="Iter1_RN.csv")
-
-##############################
-### Gráficos de eficiencia ###
-##############################
 
 
+library(png)
+metodo <- Iter_SVM
+png("SVM_0.jpg", width=840)
+plot_colores <- c("springgreen","purple","brown1","snow4","orange")
+plot(metodo$Precision, axes=T , type = "o", lwd= 2,lty=1, pch=21, cex=.8,
+     xlab ="N° de iteración", ylab="Eficiencia en la predicción",
+     xlim = c(1,10), ylim= c(0,1), col = plot_colores[1])
+lines(metodo$Specificidad, lty=1, cex=.8, pch=22, type = "o", lwd= 2, col = plot_colores[2])
+lines(metodo$Accurracy, lty=1, cex=.8, pch=23, type = "o", lwd= 2, col = plot_colores[3])
+lines(metodo$Recall, lty=1, cex=.8, pch=24, type = "o", lwd= 2, col = plot_colores[4])
+lines(metodo$Score, lty=1, cex=.8, pch=25, type = "o", lwd= 2, col = plot_colores[5])
+legend("bottom", horiz = F, lwd=2, pch= 21:25, legend = c(
+  paste("Precisión=", format(mean(metodo$Precision)*100,digits=4), "%"),
+  paste("Especificidad=", format(mean(metodo$Specificidad)*100,digits=4), "%"),
+  paste("Exactitud=", format(mean(metodo$Accurracy)*100,digits=4), "%"),
+  paste("Sensibilidad=", format(mean(metodo$Recall)*100,digits=4), "%"),
+  paste("F-1=", format(mean(metodo$Score)*100,digits=4), "%")
+),cex = 1, col = plot_colores, lty = c(1,1,1,1,1))
+box()
+dev.off()
+#########################################
+###         GRÁFICOS DE BARRA         ###
+#########################################
+t0<-  Iter_RN  # matriz de resultados validación cruzada por método (t=0)
+t1<-  Iter1_RN #matriz de resultados validación cruzada por método (t=1)
+vector_medias <-matrix(c(mean(t0$Accurracy),mean(t1$Accurracy),
+                         mean(t0$Precision),mean(t1$Precision),
+                         mean(t0$Recall),mean(t1$Recall),
+                         mean(t0$Specificidad),mean(t1$Specificidad),
+                         mean(t0$Score),mean(t1$Score)),
+                       nrow=2,byrow=F)
+colnames(vector_medias)<-c("Exactitud","Precisión","Sensibilidad","Especificidad","F-1")
 
-
-###########################
-### Gráficos de Barplot ###
-###########################
-
-vector1 <- c(Iter_RL$Precision,Iter_SVM$Precision,Iter_RN$Precision)
-vector2 <- c(Iter_RL$Recall,Iter_SVM$Recall,Iter_RN$Recall)
-vector3 <- c(Iter_RL$Score,Iter_SVM$Score,Iter_RN$Score)
-vector4 <- as.factor(c(rep('RL',10),rep('SVM',10),rep('RN',10)))
-valores <- data.frame(vector1,vector2,vector3,vector4)
-colnames(valores)= c("Precision","Recall","Score","Algoritmo")
-
-vector1.1 <- c(Iter1_RL$Precision,Iter1_SVM$Precision,Iter1_RN$Precision)
-vector2.1 <- c(Iter1_RL$Recall,Iter1_SVM$Recall,Iter1_RN$Recall)
-vector3.1 <- c(Iter1_RL$Score,Iter1_SVM$Score,Iter1_RN$Score)
-vector4.1 <- as.factor(c(rep('RL',10),rep('SVM',10),rep('RN',10)))
-valores.1 <- data.frame(vector1.1,vector2.1,vector3.1,vector4.1)
-colnames(valores.1)= c("Precision","Recall","Score","Algoritmo")
-
-write.csv(valores, file="valores.csv")
-write.csv(valores.1, file="valores1.csv")
-
-
-Precision <- aggregate(Precision ~ Algoritmo,valores, mean)
-Recall    <- aggregate(Recall ~ Algoritmo, valores, mean)
-Score     <- aggregate(Score ~ Algoritmo, valores, mean)
-
-valMedios <- matrix(c(Precision$Precision, Recall$Recall, Score$Score),
-                       nrow=3, ncol=3)
-
-rownames(valMedios) <- Precision$Algoritmo
-
-barplot(valMedios, beside = T, horiz =T, col = heat.colors(3),
-           legend=F,xlim = c(0,1),ylim = c(0,15),
-        names.arg = c('Precision','Recall','F-1'),args.legend = list(x="center"))
-
-legend("topright", c("RL", "RN", "SVM"), horiz=T,inset = .02,cex=0.4, bty="n", fill=heat.colors(3))
-
-
-#########################################################
-###                 MUESTRA BALANCEADA                ###
-#########################################################
-#prop.table(table(datos$respuesta))
-#table(datos.entrenamiento$respuesta)
-#datos.balanceado <- ovun.sample(respuesta~., data=datos.entrenamiento,
-#                                method="both", p=0.5, N=675,  
-#                                seed=1)$data
-#table(datos.balanceado$respuesta)
-
-########################################################################
-### PROBABILIDAD POSTERIOR DE CLASIFICACIÓN CON LA DISTRIBUCIÓN BETA ###
-########################################################################
-Modelo <- svm(respuesta ~ psu_matematica+psu_ciencia+psu_lenguaje+ingreso_carrera, data = datos.entrenamiento, method= "C-classification",
-              kernel="radial", gamma=0.01, cost=10)
-pred    <- predict(Modelo, datos.prueba, type = "class")  
-max(pred)
-min(pred)
-#Normalización de vector de respuesta
-real <- datos.prueba[,20]
-real
-names (real)[1] = "Real"
-names (pred)[1] = "Predicción"
-comparacion <-cbind(pred,real)
-comparacion
-head(comparacion)
-
-normalizado = as.data.frame(lapply(comparacion, 
-                                   function(columna){ 
-                                     if(is.numeric(columna)) 
-                                       (columna-min(columna))/(max(columna)-min(columna)) 
-                                     else columna}))
-
-normalizado
-normalizado <- normalizado$pred
-names (normalizado)[1] = "normalizado"
-
-comparacion <-cbind(comparacion,normalizado)
-head(comparacion)
-class(comparacion)
-### Probabilidad posterior de clasificación
-datosseg <- split(comparacion, comparacion$Real)
-datosseg
-
-beta_exito <- datosseg$"1"
-beta_fracaso <- datosseg$"0"
-head (beta_exito)
-min(beta_exito$normalizado)
-max(beta_exito$normalizado)
-min(beta_fracaso$normalizado)
-max(beta_fracaso$normalizado)
-
-media_exito <- mean(beta_exito$normalizado)
-var_exito <- var(beta_exito$normalizado)
-media_fracaso <- mean(beta_fracaso$normalizado)
-var_fracaso <- var(beta_fracaso$normalizado)
-
-hist(beta_exito$normalizado)
-hist(beta_fracaso$normalizado)
-
-# Función de distribución acumulada
-media <- media_exito
-media
-varianza <- var_exito
-varianza
-# Parámetro alpha
-alpha <- media * (((media*(1-media))/varianza)-1)
-alpha
-# Parámetro beta
-beta <- (1-media) * (((media*(1-media))/varianza)-1)
-beta
-qbeta(0.1, alpha, beta, ncp = 0, lower.tail = T, log.p = F)
-curve(dbeta(x,alpha,beta))
-
-
-# Prueba KS para hipótesis de distribución beta
-library(MASS)
-par(mfrow=c(1,2))
-hist(beta_exito[,3], xlab="Predicción", ylab="Frecuencia", las=1, main="Predicciones de éxito")
-plot(density(beta_exito[,3]), xlab="Predicción", ylab="Densidad", las=1, main="")
-
-prueba <- beta_exito[,3]
-class(prueba)
-mode(prueba)
-prueba <- (beta_exito[2:20,3])
-var(prueba)
-prueba <- as.numeric(prueba)
-class(beta_exito$col3)
-class(beta_exito$col3)
-max(beta_exito[2:20,3])
-prueba2 <- as.numeric(prueba)
-Peso <- c(750.0, 749.3, 752.5, 748.9, 749.9, 748.6, 750.2, 748.4, 747.8, 749.3, 749.6, 749.0, 747.7, 748.3, 750.5, 750.6, 750.0, 750.4, 752.0, 750.2, 751.4, 750.9, 752.4, 751.7, 750.6)
-
-ajuste <- fitdistr(prueba,"beta", start = list (shape1 = 0.7, shape2 = 0.015))
-ajuste
-xKs<- ks.test(beta_exito[2:20,3], "pbeta", mean =ajuste$estimate[1], sd= ajuste$estimate[2])
-Ks
+barplot_colores <- c("springgreen","orange")
+png("bar_RN.jpg", width=840)
+barplot(as.matrix(vector_medias), ylab= "Eficiencia en la predicción",
+        ylim=c(0,1),beside=TRUE, col=barplot_colores)
+legend("topleft", c("Clasificación pre-ingreso","Clasificación primer año"), 
+       cex=1.2, bty="n", fill=barplot_colores);
+dev.off()
